@@ -29,6 +29,17 @@ public class Main {
                 staticFilesConfig.location = io.javalin.http.staticfiles.Location.CLASSPATH;
             });
 
+            // Serve uploaded images from local external uploads directory
+            java.io.File uploadsFolder = new java.io.File("uploads");
+            if (!uploadsFolder.exists()) {
+                uploadsFolder.mkdirs();
+            }
+            config.staticFiles.add(staticFilesConfig -> {
+                staticFilesConfig.hostedPath = "/uploads";
+                staticFilesConfig.directory = "uploads";
+                staticFilesConfig.location = io.javalin.http.staticfiles.Location.EXTERNAL;
+            });
+
             // Enable CORS for frontend API calls from other ports/domains during development
             config.bundledPlugins.enableCors(cors -> cors.addRule(rule -> rule.anyHost()));
         });

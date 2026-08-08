@@ -60,6 +60,11 @@
                     <input type="email" id="contact" name="contact" class="form-control" required placeholder="student@example.com">
                 </div>
 
+                <div class="form-group">
+                    <label for="photo">Item Photo (Optional)</label>
+                    <input type="file" id="photo" name="photo" class="form-control" accept="image/png,image/jpeg,image/webp">
+                </div>
+
                 <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Submit Report</button>
             </form>
         </div>
@@ -88,29 +93,23 @@
             const msgBox = document.getElementById('message-box');
             msgBox.style.display = 'none';
 
-            const payload = {
-                name: document.getElementById('name').value,
-                description: document.getElementById('description').value,
-                location: document.getElementById('location').value,
-                date: document.getElementById('date').value,
-                type: document.getElementById('type').value,
-                contact: document.getElementById('contact').value
-            };
+            const form = document.getElementById('report-form');
+            const formData = new FormData(form);
+            const currentType = document.getElementById('type').value;
 
             try {
                 const response = await fetch('/api/items', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: formData
                 });
 
                 if (response.ok) {
                     msgBox.className = 'msg-success';
-                    msgBox.innerText = `Your ${payload.type.toLowerCase()} item has been reported successfully.`;
+                    msgBox.innerText = `Your ${currentType.toLowerCase()} item has been reported successfully.`;
                     msgBox.style.display = 'block';
-                    document.getElementById('report-form').reset();
+                    form.reset();
                     document.getElementById('date').valueAsDate = new Date();
-                    document.getElementById('type').value = payload.type; // Keep the same type
+                    document.getElementById('type').value = currentType;
                 } else {
                     const err = await response.json();
                     msgBox.className = 'msg-error';

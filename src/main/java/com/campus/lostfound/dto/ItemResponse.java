@@ -11,6 +11,7 @@ public class ItemResponse {
     private String type;
     private String status;
     private String contact;
+    private String photoPath;
 
     public ItemResponse() {}
 
@@ -23,6 +24,7 @@ public class ItemResponse {
         this.type = item.getType() != null ? item.getType().name() : null;
         this.status = item.getStatus() != null ? item.getStatus().name() : null;
         this.contact = item.getContact();
+        this.photoPath = item.getPhotoPath();
     }
 
     public int getId() {
@@ -87,5 +89,13 @@ public class ItemResponse {
 
     public void setContact(String contact) {
         this.contact = contact;
+    }
+
+    public String getPhotoPath() {
+        return photoPath;
+    }
+
+    public void setPhotoPath(String photoPath) {
+        this.photoPath = photoPath;
     }
 }

@@ -12,12 +12,13 @@ public class Item {
     private Type type;
     private Status status;
     private String contact;
+    private String photoPath;
     private LocalDateTime createdAt;
 
     public Item() {
     }
 
-    public Item(Integer id, String name, String description, String location, LocalDate date, Type type, Status status, String contact, LocalDateTime createdAt) {
+    public Item(Integer id, String name, String description, String location, LocalDate date, Type type, Status status, String contact, String photoPath, LocalDateTime createdAt) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -26,6 +27,7 @@ public class Item {
         this.type = type;
         this.status = status;
         this.contact = contact;
+        this.photoPath = photoPath;
         this.createdAt = createdAt;
     }
 
@@ -91,6 +93,14 @@ public class Item {
 
     public void setContact(String contact) {
         this.contact = contact;
+    }
+
+    public String getPhotoPath() {
+        return photoPath;
+    }
+
+    public void setPhotoPath(String photoPath) {
+        this.photoPath = photoPath;
     }
 
     public LocalDateTime getCreatedAt() {

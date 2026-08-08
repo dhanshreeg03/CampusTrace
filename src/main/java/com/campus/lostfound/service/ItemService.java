@@ -29,6 +29,7 @@ public class ItemService {
         item.setType(Type.valueOf(request.getType().toUpperCase().trim()));
         item.setStatus(Status.OPEN);
         item.setContact(request.getContact().trim());
+        item.setPhotoPath(request.getPhotoPath());
 
         return itemRepository.save(item);
     }
@@ -66,10 +67,19 @@ public class ItemService {
     }
 
     public void deleteItem(int id) {
-        itemRepository.findById(id)
+        Item item = itemRepository.findById(id)
                 .orElseThrow(() -> new ItemNotFoundException("Item not found"));
         
         itemRepository.delete(id);
+
+        if (item.getPhotoPath() != null && !item.getPhotoPath().isEmpty()) {
+            try {
+                // remove leading '/' if present
+                String pathStr = item.getPhotoPath().startsWith("/") ? item.getPhotoPath().substring(1) : item.getPhotoPath();
+                java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(pathStr));
+            } catch (Exception ignored) {
+            }
+        }
     }
 
     private void validateCreateRequest(CreateItemRequest request) {

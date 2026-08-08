@@ -18,7 +18,70 @@ public class ItemController {
     }
 
     public void createItem(Context ctx) {
-        CreateItemRequest request = ctx.bodyAsClass(CreateItemRequest.class);
+        CreateItemRequest request;
+        String contentType = ctx.contentType();
+
+        if (contentType != null && contentType.toLowerCase().contains("multipart/form-data")) {
+            request = new CreateItemRequest();
+            request.setName(ctx.formParam("name"));
+            request.setDescription(ctx.formParam("description"));
+            request.setLocation(ctx.formParam("location"));
+            request.setDate(ctx.formParam("date"));
+            request.setType(ctx.formParam("type"));
+            request.setContact(ctx.formParam("contact"));
+
+            io.javalin.http.UploadedFile uploadedFile = ctx.uploadedFile("photo");
+            if (uploadedFile != null && uploadedFile.size() > 0) {
+                // Validate size (5 MB max)
+                if (uploadedFile.size() > 5 * 1024 * 1024) {
+                    ctx.status(HttpStatus.BAD_REQUEST);
+                    ctx.json(java.util.Map.of("success", false, "message", "Image size must be less than 5 MB"));
+                    return;
+                }
+
+                // Validate file type
+                String fileContentType = uploadedFile.contentType();
+                String filename = uploadedFile.filename() != null ? uploadedFile.filename().toLowerCase() : "";
+                boolean isValidType = (fileContentType != null && (
+                        fileContentType.equalsIgnoreCase("image/jpeg") ||
+                        fileContentType.equalsIgnoreCase("image/jpg") ||
+                        fileContentType.equalsIgnoreCase("image/png") ||
+                        fileContentType.equalsIgnoreCase("image/webp")
+                )) || (
+                        filename.endsWith(".jpg") || filename.endsWith(".jpeg") ||
+                        filename.endsWith(".png") || filename.endsWith(".webp")
+                );
+
+                if (!isValidType) {
+                    ctx.status(HttpStatus.BAD_REQUEST);
+                    ctx.json(java.util.Map.of("success", false, "message", "Only JPG, PNG and WEBP images are allowed"));
+                    return;
+                }
+
+                String ext = ".jpg";
+                if (filename.endsWith(".png")) ext = ".png";
+                else if (filename.endsWith(".webp")) ext = ".webp";
+                else if (filename.endsWith(".jpeg")) ext = ".jpeg";
+
+                String uniqueFilename = "item_" + java.util.UUID.randomUUID().toString().substring(0, 8) + ext;
+                java.io.File uploadDir = new java.io.File("uploads");
+                if (!uploadDir.exists()) {
+                    uploadDir.mkdirs();
+                }
+
+                java.io.File destFile = new java.io.File(uploadDir, uniqueFilename);
+                try (var is = uploadedFile.content(); var os = new java.io.FileOutputStream(destFile)) {
+                    is.transferTo(os);
+                } catch (Exception e) {
+                    throw new RuntimeException("Failed to save uploaded file: " + e.getMessage(), e);
+                }
+
+                request.setPhotoPath("/uploads/" + uniqueFilename);
+            }
+        } else {
+            request = ctx.bodyAsClass(CreateItemRequest.class);
+        }
+
         Item created = itemService.createItem(request);
         ctx.status(HttpStatus.CREATED);
         ctx.json(new ItemResponse(created));

@@ -120,11 +120,16 @@
                 const desc = item.description.length > 100 
                     ? item.description.substring(0, 97) + '...' 
                     : item.description;
+
+                const photoHtml = item.photoPath 
+                    ? `<div class="card-img-container"><img src="${item.photoPath}" alt="${item.name}" class="card-img"></div>`
+                    : `<div class="card-img-container placeholder-img"><span>No Image Provided</span></div>`;
                 
                 const card = document.createElement('div');
                 card.className = 'card item-card';
                 card.innerHTML = `
-                    <div class="badge ${badgeClass}">${item.type}</div>
+                    ${photoHtml}
+                    <div style="margin-top: 1rem;" class="badge ${badgeClass}">${item.type}</div>
                     <h3>${item.name}</h3>
                     <div class="item-meta">
                         📍 ${item.location}

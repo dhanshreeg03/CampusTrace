@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS items (
     type ENUM('LOST', 'FOUND') NOT NULL,
     status ENUM('OPEN', 'RESOLVED') NOT NULL DEFAULT 'OPEN',
     contact VARCHAR(255) NOT NULL,
+    photo_path VARCHAR(500) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_type (type),
     INDEX idx_status (status),

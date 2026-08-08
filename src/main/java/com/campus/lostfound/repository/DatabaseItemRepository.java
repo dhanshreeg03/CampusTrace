@@ -15,7 +15,7 @@ public class DatabaseItemRepository implements ItemRepository {
 
     @Override
     public Item save(Item item) {
-        String sql = "INSERT INTO items (name, description, location, date, type, status, contact) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO items (name, description, location, date, type, status, contact, photo_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             
@@ -26,6 +26,7 @@ public class DatabaseItemRepository implements ItemRepository {
             ps.setString(5, item.getType().name());
             ps.setString(6, item.getStatus() != null ? item.getStatus().name() : Status.OPEN.name());
             ps.setString(7, item.getContact().trim());
+            ps.setString(8, item.getPhotoPath());
 
             ps.executeUpdate();
 
@@ -44,7 +45,7 @@ public class DatabaseItemRepository implements ItemRepository {
 
     @Override
     public Optional<Item> findById(int id) {
-        String sql = "SELECT id, name, description, location, date, type, status, contact, created_at FROM items WHERE id = ?";
+        String sql = "SELECT id, name, description, location, date, type, status, contact, photo_path, created_at FROM items WHERE id = ?";
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             
@@ -62,7 +63,7 @@ public class DatabaseItemRepository implements ItemRepository {
 
     @Override
     public List<Item> findByFilters(Type type, String location) {
-        StringBuilder sb = new StringBuilder("SELECT id, name, description, location, date, type, status, contact, created_at FROM items WHERE status = 'OPEN'");
+        StringBuilder sb = new StringBuilder("SELECT id, name, description, location, date, type, status, contact, photo_path, created_at FROM items WHERE status = 'OPEN'");
         List<Object> params = new ArrayList<>();
 
         if (type != null) {
@@ -96,7 +97,7 @@ public class DatabaseItemRepository implements ItemRepository {
 
     @Override
     public List<Item> search(String keyword) {
-        String sql = "SELECT id, name, description, location, date, type, status, contact, created_at FROM items " +
+        String sql = "SELECT id, name, description, location, date, type, status, contact, photo_path, created_at FROM items " +
                      "WHERE status = 'OPEN' AND (LOWER(name) LIKE ? OR LOWER(description) LIKE ?) " +
                      "ORDER BY created_at DESC";
 
@@ -165,6 +166,7 @@ public class DatabaseItemRepository implements ItemRepository {
         item.setType(Type.valueOf(rs.getString("type")));
         item.setStatus(Status.valueOf(rs.getString("status")));
         item.setContact(rs.getString("contact"));
+        item.setPhotoPath(rs.getString("photo_path"));
         
         Timestamp ts = rs.getTimestamp("created_at");
         if (ts != null) {
