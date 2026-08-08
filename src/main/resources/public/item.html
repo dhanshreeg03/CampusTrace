@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Item Details - Campus Lost & Found</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo">Campus Lost & Found</a>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="browse.html">Browse Items</a></li>
+                    <li><a href="report.html?type=LOST">Report Lost</a></li>
+                    <li><a href="report.html?type=FOUND">Report Found</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="card details-container" id="item-details" style="display: none;">
+            <div id="message-box"></div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
+                <div>
+                    <div id="item-badge" class="badge"></div>
+                    <h2 id="item-name" style="margin: 1rem 0 0.5rem 0; font-size: 2rem;"></h2>
+                </div>
+                <div id="status-badge" class="badge"></div>
+            </div>
+
+            <div class="details-grid">
+                <div class="details-item">
+                    <h4>Location</h4>
+                    <p id="item-location"></p>
+                </div>
+                <div class="details-item">
+                    <h4>Date</h4>
+                    <p id="item-date"></p>
+                </div>
+                <div class="details-item" style="grid-column: 1 / -1;">
+                    <h4>Description</h4>
+                    <p id="item-description"></p>
+                </div>
+                <div class="details-item" style="grid-column: 1 / -1;">
+                    <h4>Contact</h4>
+                    <p id="item-contact" style="color: var(--primary-color);"></p>
+                </div>
+            </div>
+
+            <div style="margin-top: 3rem; text-align: center;" id="action-area">
+                <button id="resolve-btn" class="btn btn-primary" style="width: 100%; max-width: 300px;">Mark as Resolved</button>
+            </div>
+        </div>
+
+        <div id="loading" style="text-align: center; margin-top: 5rem; color: var(--text-muted);">
+            Loading item details...
+        </div>
+    </main>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const itemId = urlParams.get('id');
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!itemId) {
+                document.getElementById('loading').innerText = 'Item ID not provided.';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/items/${itemId}`);
+                if (!response.ok) {
+                    throw new Error('Item not found.');
+                }
+                const item = await response.json();
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('item-details').style.display = 'block';
+
+                document.getElementById('item-name').innerText = item.name;
+                document.getElementById('item-description').innerText = item.description;
+                document.getElementById('item-location').innerText = item.location;
+                
+                const options = { year: 'numeric', month: 'long', day: 'numeric' };
+                document.getElementById('item-date').innerText = new Date(item.date).toLocaleDateString(undefined, options);
+                
+                const contactHtml = `<a href="mailto:${item.contact}" style="color: inherit; text-decoration: underline;">${item.contact}</a>`;
+                document.getElementById('item-contact').innerHTML = contactHtml;
+
+                const typeBadge = document.getElementById('item-badge');
+                typeBadge.innerText = item.type;
+                typeBadge.className = `badge ${item.type === 'LOST' ? 'badge-lost' : 'badge-found'}`;
+
+                const statusBadge = document.getElementById('status-badge');
+                statusBadge.innerText = item.status;
+                statusBadge.className = `badge ${item.status === 'OPEN' ? 'badge-open' : 'badge-resolved'}`;
+
+                if (item.status === 'RESOLVED') {
+                    document.getElementById('action-area').style.display = 'none';
+                }
+
+            } catch (error) {
+                document.getElementById('loading').innerText = error.message;
+            }
+        });
+
+        document.getElementById('resolve-btn').addEventListener('click', async () => {
+            if (!confirm('Are you sure you want to mark this item as resolved? It will be removed from active listings.')) return;
+            
+            const msgBox = document.getElementById('message-box');
+            msgBox.style.display = 'none';
+
+            try {
+                const response = await fetch(`/api/items/${itemId}/resolve`, {
+                    method: 'PUT'
+                });
+
+                if (response.ok) {
+                    msgBox.className = 'msg-success';
+                    msgBox.innerText = 'Item marked as resolved successfully.';
+                    msgBox.style.display = 'block';
+                    
+                    document.getElementById('action-area').style.display = 'none';
+                    const statusBadge = document.getElementById('status-badge');
+                    statusBadge.innerText = 'RESOLVED';
+                    statusBadge.className = 'badge badge-resolved';
+                } else {
+                    const err = await response.json();
+                    msgBox.className = 'msg-error';
+                    msgBox.innerText = err.message || 'An error occurred while resolving.';
+                    msgBox.style.display = 'block';
+                }
+            } catch (error) {
+                msgBox.className = 'msg-error';
+                msgBox.innerText = 'Network error. Please try again later.';
+                msgBox.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

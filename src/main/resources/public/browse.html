@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browse Items - Campus Lost & Found</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo">Campus Lost & Found</a>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="browse.html" class="active">Browse Items</a></li>
+                    <li><a href="report.html?type=LOST">Report Lost</a></li>
+                    <li><a href="report.html?type=FOUND">Report Found</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="controls-bar">
+            <div style="flex: 2; min-width: 300px;">
+                <input type="text" id="search-input" class="form-control" placeholder="Search for an item (e.g. wallet)...">
+            </div>
+            
+            <div>
+                <select id="filter-type" class="form-control">
+                    <option value="">All Types</option>
+                    <option value="LOST">Lost</option>
+                    <option value="FOUND">Found</option>
+                </select>
+            </div>
+            
+            <div>
+                <select id="filter-location" class="form-control">
+                    <option value="">All Locations</option>
+                    <option value="Library">Library</option>
+                    <option value="Canteen">Canteen</option>
+                    <option value="Classroom">Classroom</option>
+                    <option value="Sports Ground">Sports Ground</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            
+            <div>
+                <button id="search-btn" class="btn btn-primary" style="padding: 0.75rem 2rem;">Search</button>
+            </div>
+        </div>
+
+        <div id="items-grid" class="items-grid">
+            <!-- Items injected by JS -->
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', loadItems);
+        document.getElementById('search-btn').addEventListener('click', () => {
+            const keyword = document.getElementById('search-input').value.trim();
+            if (keyword) {
+                searchItems(keyword);
+            } else {
+                loadItems();
+            }
+        });
+        
+        document.getElementById('filter-type').addEventListener('change', loadItems);
+        document.getElementById('filter-location').addEventListener('change', loadItems);
+
+        // Allow 'Enter' key to trigger search
+        document.getElementById('search-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                document.getElementById('search-btn').click();
+            }
+        });
+
+        async function loadItems() {
+            const type = document.getElementById('filter-type').value;
+            const location = document.getElementById('filter-location').value;
+            
+            let url = '/api/items?';
+            if (type) url += `type=${type}&`;
+            if (location) url += `location=${location}`;
+
+            try {
+                const response = await fetch(url);
+                const items = await response.json();
+                renderItems(items);
+            } catch (error) {
+                console.error("Failed to load items", error);
+            }
+        }
+
+        async function searchItems(keyword) {
+            try {
+                const response = await fetch(`/api/items/search?keyword=${encodeURIComponent(keyword)}`);
+                const items = await response.json();
+                renderItems(items);
+            } catch (error) {
+                console.error("Failed to search items", error);
+            }
+        }
+
+        function renderItems(items) {
+            const grid = document.getElementById('items-grid');
+            grid.innerHTML = '';
+
+            if (items.length === 0) {
+                grid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: var(--text-muted);">No items found.</p>';
+                return;
+            }
+
+            items.forEach(item => {
+                const badgeClass = item.type === 'LOST' ? 'badge-lost' : 'badge-found';
+                
+                // Truncate description if too long
+                const desc = item.description.length > 100 
+                    ? item.description.substring(0, 97) + '...' 
+                    : item.description;
+                
+                const card = document.createElement('div');
+                card.className = 'card item-card';
+                card.innerHTML = `
+                    <div class="badge ${badgeClass}">${item.type}</div>
+                    <h3>${item.name}</h3>
+                    <div class="item-meta">
+                        📍 ${item.location}
+                    </div>
+                    <div class="item-meta">
+                        📅 ${formatDate(item.date)}
+                    </div>
+                    <p>${desc}</p>
+                    <a href="item.html?id=${item.id}" class="btn btn-outline" style="text-align: center;">View Details</a>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return 'Unknown Date';
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return new Date(dateStr).toLocaleDateString(undefined, options);
+        }
+    </script>
+</body>
+</html>
